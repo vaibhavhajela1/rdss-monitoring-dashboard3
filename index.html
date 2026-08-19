@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDSS Monitoring Dashboard — Draft V1</title>
+<style>
+:root{
+  --navy:#12324a; --blue:#1f6f9f; --teal:#2b8a8a; --green:#2f7d5b;
+  --amber:#b7791f; --red:#b34a4a; --ink:#1e293b; --muted:#64748b;
+  --line:#e2e8f0; --bg:#f4f7fa; --card:#ffffff; --soft:#eef4f8;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.header{background:linear-gradient(110deg,#102f45,#1d5876);color:white;padding:24px 32px 20px;position:sticky;top:0;z-index:5;box-shadow:0 2px 12px #0002}
+.header-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+h1{font-size:26px;margin:0 0 5px;font-weight:700}.subtitle{opacity:.82;font-size:13px}
+.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{padding:7px 10px;border:1px solid #ffffff35;border-radius:20px;font-size:11px;background:#ffffff12}
+.container{max-width:1500px;margin:auto;padding:20px 28px 45px}
+.nav{display:flex;gap:8px;margin:0 0 20px;overflow:auto}.nav button{border:0;background:white;color:var(--muted);padding:10px 15px;border-radius:8px;font-weight:650;cursor:pointer;box-shadow:0 1px 3px #0001}.nav button.active{background:var(--navy);color:white}
+.filters{background:white;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:18px}
+label{font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:5px}
+select,input{height:36px;border:1px solid #cbd5e1;border-radius:7px;padding:0 10px;background:white;color:var(--ink);min-width:180px}
+.coverage{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:0 1px 2px #00000008}
+.kpi .label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.kpi .value{font-size:25px;font-weight:750;margin:8px 0 3px;color:var(--navy)}.kpi .note{font-size:11px;color:var(--muted)}
+.section-title{font-size:16px;font-weight:750;margin:0 0 14px}.small{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line);padding:10px 8px;white-space:nowrap}td{padding:10px 8px;border-bottom:1px solid #edf1f5}tr:last-child td{border-bottom:0}.num{text-align:right;font-variant-numeric:tabular-nums}
+.progress{height:8px;background:#e8eef3;border-radius:8px;overflow:hidden;min-width:90px}.progress span{display:block;height:100%;background:var(--blue);border-radius:8px}
+.barrow{display:grid;grid-template-columns:110px 1fr 72px;gap:10px;align-items:center;margin:13px 0}.barlabel{font-size:12px;font-weight:650}.bartrack{height:20px;background:#edf2f6;border-radius:5px;overflow:hidden}.barfill{height:100%;background:var(--blue);border-radius:5px}.barvalue{text-align:right;font-size:11px;font-weight:700;color:var(--navy)}
+.legend{display:flex;gap:15px;font-size:11px;color:var(--muted);margin-top:8px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;background:var(--blue)}
+.alert{background:#fff8e8;border:1px solid #f1d69b;color:#75541c;border-radius:10px;padding:11px 13px;font-size:12px;margin-bottom:16px}
+.pill{display:inline-block;border-radius:14px;padding:4px 8px;font-size:10px;font-weight:700;background:#eef5f8;color:var(--blue)}
+.chart{min-height:260px}.donut{width:145px;height:145px;border-radius:50%;margin:8px auto 15px;display:grid;place-items:center;background:conic-gradient(var(--blue) 0 29.04%, #dbe6ee 29.04% 100%)}.donut:after{content:"29.04%";width:94px;height:94px;background:white;border-radius:50%;display:grid;place-items:center;font-weight:800;color:var(--navy);font-size:16px}
+.footer{font-size:10px;color:#7b8794;margin-top:18px;line-height:1.5}
+.hidden{display:none}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.container{padding:14px}.header{padding:18px}.header-row{display:block}.coverage{margin-left:0}.nav{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-row">
+    <div>
+      <h1>RDSS Monitoring Dashboard</h1>
+      <div class="subtitle">Revamped Distribution Sector Scheme — Physical & Financial Progress | Draft V1</div>
+    </div>
+    <div class="badges">
+      <span class="badge">Source: RDSS Portal</span>
+      <span class="badge">Verified responses captured during development</span>
+      <span class="badge">6 DISCOMs • 2 States</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="nav" id="nav"></div>
+  <div id="app"></div>
+  <div class="footer">
+    Data integrity note: This draft uses only RDSS response data supplied during the conversation. It does not invent missing values.
+    Values are displayed as returned by the portal; award cost can therefore exceed approved cost where the source does so.
+  </div>
+</main>
+
+<script>
+const DATA = {
+  nationalPhysical:{sanctioned:201288140,awarded:128572197,meters:58450563,progress:29.04},
+  statePhysical:{
+    "Himachal Pradesh":{id:13,sanctioned:2841908,awarded:2918432,meters:978176,progress:34.42}
+  },
+  stateFinancial:{
+    "Himachal Pradesh":{id:13,approved:2292.92213,award:2656.41937,gbsSan:2063.6,gbsRel:445.06,awardPct:115.85301285395167,gbsPct:21.567164179104477},
+    "Uttar Pradesh":{id:35,approved:21460.08024,award:20171.15245,gbsSan:12877.73,gbsRel:5953.83452,awardPct:93.99383517868866,gbsPct:46.23357159996367}
+  },
+  discoms:[
+    {state:"Himachal Pradesh",stateId:13,id:66,name:"HPSEBL",approved:2292.92213,award:2656.41937,gbsSan:2063.6,gbsRel:445.06,awardPct:115.85301285395167,gbsPct:21.567164179104477},
+    {state:"Uttar Pradesh",stateId:35,id:100,name:"DVVNL",approved:3935.36226,award:3930.18771,gbsSan:2361.2,gbsRel:1278.9065,awardPct:99.8685114696404,gbsPct:54.16341267152296},
+    {state:"Uttar Pradesh",stateId:35,id:104,name:"KESCO",approved:1342.13023,award:1328.89962,gbsSan:805.27,gbsRel:485.1305739,awardPct:99.01420818157118,gbsPct:60.24446134836763},
+    {state:"Uttar Pradesh",stateId:35,id:101,name:"MVVNL",approved:4716.45785,award:4372.52726,gbsSan:2830.08,gbsRel:1320.0108656,awardPct:92.7078625328963,gbsPct:46.6421749773858},
+    {state:"Uttar Pradesh",stateId:35,id:102,name:"PaVVNL",approved:4975.59978,award:4919.59736,gbsSan:2985.37,gbsRel:1218.829792,awardPct:98.87445890995681,gbsPct:40.8267582242737},
+    {state:"Uttar Pradesh",stateId:35,id:103,name:"PuVVNL",approved:6490.53012,award:5619.9405,gbsSan:3895.81,gbsRel:1650.9567885,awardPct:86.5867717443086,gbsPct:42.377754266763525}
+  ],
+  components:[
+    {name:"LT",san:922368,award:857076,ach:521566,installed:585122,awardPct:92.92,surveyPct:63.44},
+    {name:"HT",san:801783,award:757741,ach:323818,installed:488882,awardPct:94.51,surveyPct:60.97},
+    {name:"DTR",san:589584,award:553488,ach:245813,installed:204714,awardPct:93.88,surveyPct:34.72},
+    {name:"Substation",san:3991,award:3892,ach:1256,installed:1200,awardPct:97.52,surveyPct:30.07}
+  ],
+  hpAssets:[
+    {name:"HT Line",sanCost:110691.24,awardCost:113540.81,sanItems:7087.78,awardItems:6556.25,surveyed:4642.70,installed:20.18},
+    {name:"LT Line",sanCost:31738.24,awardCost:50452.48,sanItems:6829.12,awardItems:6900.96,surveyed:4647.31,installed:22.14},
+    {name:"DTR",sanCost:46716.53,awardCost:51733.77,sanItems:10164,awardItems:10159,surveyed:7839,installed:613},
+    {name:"Substation",sanCost:22022.31,awardCost:36224.03,sanItems:48,awardItems:48,surveyed:26,installed:0}
+  ]
+};
+let page="Overview", stateFilter="All", discomFilter="All", search="";
+const pages=["Overview","State Performance","DISCOM Financial","Component Progress","Asset-wise Progress"];
+
+const fmt=(n,d=0)=>new Intl.NumberFormat("en-IN",{maximumFractionDigits:d,minimumFractionDigits:d}).format(n);
+const lakh=n=>"₹ "+fmt(n,2)+" Lakh";
+const pct=n=>fmt(n,2)+"%";
+function el(s){return document.querySelector(s)}
+function renderNav(){el("#nav").innerHTML=pages.map(p=>`<button class="${p===page?'active':''}" onclick="page='${p}';render()">${p}</button>`).join("")}
+function filters(extra=""){
+  return `<div class="filters">
+    ${extra}
+    <div class="coverage">Verified coverage: <b>2 States</b> • <b>6 DISCOMs</b></div>
+  </div>`;
+}
+function kpi(label,value,note=""){return `<div class="card kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="note">${note}</div></div>`}
+function bar(label,val,max,display){let w=max?Math.max(0,Math.min(100,val/max*100)):0;return `<div class="barrow"><div class="barlabel">${label}</div><div class="bartrack"><div class="barfill" style="width:${w}%"></div></div><div class="barvalue">${display}</div></div>`}
+function stateOptions(){return `<select id="stateSelect" onchange="stateFilter=this.value;discomFilter='All';render()"><option>All</option>${Object.keys(DATA.stateFinancial).map(s=>`<option ${stateFilter===s?'selected':''}>${s}</option>`).join("")}</select>`}
+function discomOptions(list){return `<select id="discomSelect" onchange="discomFilter=this.value;render()"><option>All</option>${list.map(x=>`<option ${discomFilter===x.name?'selected':''}>${x.name}</option>`).join("")}</select>`}
+
+function overview(){
+  const n=DATA.nationalPhysical;
+  return `
+  ${filters()}
+  <div class="alert"><b>Draft V1 data boundary:</b> This dashboard uses verified RDSS responses captured during development. DISCOM-level financial data is available for 6 DISCOMs across Himachal Pradesh and Uttar Pradesh. Missing KPIs are not fabricated.</div>
+  <div class="grid">
+    ${kpi("Sanctioned Items",fmt(n.sanctioned),"All India")}
+    ${kpi("Awarded Items",fmt(n.awarded),"All India")}
+    ${kpi("Communicating Meters",fmt(n.meters),"All India")}
+    ${kpi("Overall Progress",pct(n.progress),"All India")}
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="section-title">All India physical progress</div>
+      <div class="donut"></div>
+      <div style="text-align:center" class="small">Overall progress reported by RDSS</div>
+      <div style="margin-top:20px">
+        ${bar("Sanctioned",n.sanctioned,n.sanctioned,fmt(n.sanctioned))}
+        ${bar("Awarded",n.awarded,n.sanctioned,fmt(n.awarded))}
+        ${bar("Meters",n.meters,n.sanctioned,fmt(n.meters))}
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">State financial snapshot</div>
+      <table><thead><tr><th>State</th><th class="num">Approved</th><th class="num">Award</th><th class="num">GBS released</th></tr></thead><tbody>
+      ${Object.entries(DATA.stateFinancial).map(([s,x])=>`<tr><td><b>${s}</b></td><td class="num">${lakh(x.approved)}</td><td class="num">${lakh(x.award)}</td><td class="num">${lakh(x.gbsRel)}</td></tr>`).join("")}
+      </tbody></table>
+      <div style="margin-top:15px" class="small">Only States with supplied financial responses are shown.</div>
+    </div>
+  </div>`;
+}
+
+function statePage(){
+  const s=stateFilter==="All"?"Himachal Pradesh":stateFilter, f=DATA.stateFinancial[s], p=DATA.statePhysical[s];
+  return `${filters(`<div><label>State</label>${stateOptions()}</div>`)
+  }<div class="grid">
+    ${kpi("Approved Project Cost",lakh(f.approved),s)}
+    ${kpi("Award Cost",lakh(f.award),s)}
+    ${kpi("GBS Sanctioned",lakh(f.gbsSan),s)}
+    ${kpi("GBS Released",lakh(f.gbsRel),`${pct(f.gbsPct)} of sanctioned`)}
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="section-title">Financial performance</div>
+      ${bar("Approved",f.approved,Math.max(f.approved,f.award),lakh(f.approved))}
+      ${bar("Award",f.award,Math.max(f.approved,f.award),lakh(f.award))}
+      ${bar("GBS sanctioned",f.gbsSan,f.approved,lakh(f.gbsSan))}
+      ${bar("GBS released",f.gbsRel,f.gbsSan,lakh(f.gbsRel))}
+      <table style="margin-top:18px"><tr><td>Award / Approved</td><td class="num"><b>${pct(f.awardPct)}</b></td></tr><tr><td>GBS released / GBS sanctioned</td><td class="num"><b>${pct(f.gbsPct)}</b></td></tr></table>
+    </div>
+    <div class="card"><div class="section-title">Physical progress</div>
+      ${p?`<div class="grid" style="grid-template-columns:repeat(2,1fr)">
+        ${kpi("Sanctioned Items",fmt(p.sanctioned))}
+        ${kpi("Awarded Items",fmt(p.awarded))}
+        ${kpi("Communicating Meters",fmt(p.meters))}
+        ${kpi("Progress",pct(p.progress))}
+      </div>`:`<div class="alert">Physical progress is not available in the current dataset for ${s}.</div>`}
+    </div>
+  </div>`;
+}
+
+function discomPage(){
+  let list=DATA.discoms.filter(x=>stateFilter==="All"||x.state===stateFilter).filter(x=>!search||x.name.toLowerCase().includes(search.toLowerCase()));
+  if(discomFilter!=="All") list=list.filter(x=>x.name===discomFilter);
+  const allForOptions=DATA.discoms.filter(x=>stateFilter==="All"||x.state===stateFilter);
+  return `${filters(`<div><label>State</label>${stateOptions()}</div><div><label>DISCOM</label>${discomOptions(allForOptions)}</div><div><label>Search</label><input value="${search}" placeholder="Search DISCOM" oninput="search=this.value;render()"></div>`)}
+  <div class="card">
+    <div class="section-title">DISCOM financial performance <span class="pill">${list.length} record${list.length===1?'':'s'}</span></div>
+    <div style="overflow:auto"><table><thead><tr><th>State</th><th>DISCOM</th><th class="num">Approved Cost</th><th class="num">Award Cost</th><th class="num">GBS Sanctioned</th><th class="num">GBS Released</th><th class="num">Award / Approved</th><th class="num">GBS Released / Sanctioned</th></tr></thead>
+    <tbody>${list.map(x=>`<tr><td>${x.state}</td><td><b>${x.name}</b></td><td class="num">${lakh(x.approved)}</td><td class="num">${lakh(x.award)}</td><td class="num">${lakh(x.gbsSan)}</td><td class="num">${lakh(x.gbsRel)}</td><td class="num">${pct(x.awardPct)}</td><td class="num">${pct(x.gbsPct)}</td></tr>`).join("")}</tbody></table></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="section-title">GBS sanctioned vs released</div>
+      ${list.map(x=>bar(x.name,x.gbsRel,x.gbsSan,lakh(x.gbsRel))).join("")}
+    </div>
+    <div class="card"><div class="section-title">Award cost / approved cost</div>
+      ${list.map(x=>bar(x.name,Math.min(x.awardPct,120),120,pct(x.awardPct))).join("")}
+      <div class="small">The source can report values above 100%; figures are shown as supplied.</div>
+    </div>
+  </div>`;
+}
+
+function componentPage(){
+  const max=Math.max(...DATA.components.map(x=>x.san));
+  return `${filters()}<div class="card"><div class="section-title">All India component progress</div>
+  <div style="overflow:auto"><table><thead><tr><th>Component</th><th class="num">Sanctioned</th><th class="num">Awarded</th><th class="num">Achievement</th><th class="num">Installed</th><th class="num">Award %</th><th class="num">Surveyed %</th></tr></thead>
+  <tbody>${DATA.components.map(x=>`<tr><td><b>${x.name}</b></td><td class="num">${fmt(x.san)}</td><td class="num">${fmt(x.award)}</td><td class="num">${fmt(x.ach)}</td><td class="num">${fmt(x.installed)}</td><td class="num">${pct(x.awardPct)}</td><td class="num">${pct(x.surveyPct)}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="grid2"><div class="card"><div class="section-title">Awarded items by component</div>${DATA.components.map(x=>bar(x.name,x.award,max,fmt(x.award))).join("")}</div>
+  <div class="card"><div class="section-title">Surveyed percentage</div>${DATA.components.map(x=>bar(x.name,x.surveyPct,100,pct(x.surveyPct))).join("")}</div></div>`;
+}
+
+function assetPage(){
+  const a=DATA.hpAssets;
+  return `${filters(`<div><label>State</label><select disabled><option>Himachal Pradesh</option></select></div>`)}
+  <div class="alert"><b>Scope:</b> State-level asset data for Himachal Pradesh only. This is not DISCOM-level asset data.</div>
+  <div class="card"><div class="section-title">Himachal Pradesh — asset-wise progress</div>
+  <div style="overflow:auto"><table><thead><tr><th>Asset</th><th class="num">Sanctioned Cost (₹ Lakh)</th><th class="num">Award Cost (₹ Lakh)</th><th class="num">Sanctioned Items</th><th class="num">Award Items</th><th class="num">Surveyed</th><th class="num">Installed</th></tr></thead>
+  <tbody>${a.map(x=>`<tr><td><b>${x.name}</b></td><td class="num">${fmt(x.sanCost,2)}</td><td class="num">${fmt(x.awardCost,2)}</td><td class="num">${fmt(x.sanItems,2)}</td><td class="num">${fmt(x.awardItems,2)}</td><td class="num">${fmt(x.surveyed,2)}</td><td class="num">${fmt(x.installed,2)}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="grid2"><div class="card"><div class="section-title">Installed items by asset</div>${a.map(x=>bar(x.name,x.installed,Math.max(...a.map(y=>y.installed)),fmt(x.installed,2))).join("")}</div>
+  <div class="card"><div class="section-title">Sanctioned vs award cost</div>${a.map(x=>bar(x.name,x.awardCost,Math.max(...a.map(y=>y.awardCost)),lakh(x.awardCost))).join("")}</div></div>`;
+}
+function render(){
+  renderNav();
+  el("#app").innerHTML=page==="Overview"?overview():page==="State Performance"?statePage():page==="DISCOM Financial"?discomPage():page==="Component Progress"?componentPage():assetPage();
+}
+render();
+</script>
+</body>
+</html>
