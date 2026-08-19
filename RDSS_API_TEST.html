@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDSS API Connection Test</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f7fa;margin:0;padding:40px;color:#172033}
+.card{max-width:900px;margin:auto;background:white;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+h1{margin-top:0}.muted{color:#667085}.status{padding:14px 16px;border-radius:8px;background:#eef2f7;margin:20px 0;font-weight:600}
+.success{background:#e8f7ee;color:#176b3a}.error{background:#fff0f0;color:#a12626}
+button{padding:10px 18px;border:0;border-radius:7px;background:#1f4e79;color:white;cursor:pointer}
+pre{background:#111827;color:#e5e7eb;padding:16px;border-radius:8px;overflow:auto;max-height:420px;font-size:13px}
+table{border-collapse:collapse;width:100%;margin-top:18px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}th{background:#f3f4f6}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>RDSS API Connection Test</h1>
+<p class="muted">Testing the live RDSS endpoint used for All-India physical progress.</p>
+<p><strong>Endpoint:</strong> getProgressDetailLs</p>
+<button onclick="testAPI()">Test RDSS API Again</button>
+<div id="status" class="status">Testing connection…</div>
+<div id="summary"></div>
+<details><summary><strong>Show raw response</strong></summary><pre id="raw">Waiting…</pre></details>
+</div>
+<script>
+const API="https://rdss.powermin.gov.in:8443/apiv1/getProgressDetailLs?selected=0&charttype=&reportType=Allindia";
+async function testAPI(){
+ const status=document.getElementById("status"),summary=document.getElementById("summary"),raw=document.getElementById("raw");
+ status.className="status";status.textContent="Testing RDSS connection…";summary.innerHTML="";raw.textContent="Waiting…";
+ try{
+  const response=await fetch(API,{method:"GET",cache:"no-store"});
+  const text=await response.text(); raw.textContent=text;
+  if(!response.ok) throw new Error("HTTP "+response.status+" "+response.statusText);
+  let data; try{data=JSON.parse(text)}catch(e){throw new Error("RDSS responded, but the response was not valid JSON.")}
+  if(data._resultflag!=="1") throw new Error("RDSS responded, but reported an unsuccessful result.");
+  status.className="status success";status.textContent="🟢 SUCCESS — Your dashboard was able to read the RDSS API directly.";
+  const r=data.rows||{},items=[
+   ["LT sanctioned items",r.lt?.santion_items??"—"],["HT sanctioned items",r.ht?.santion_items??"—"],
+   ["DTR sanctioned items",r.dtr?.santion_items??"—"],["Substation sanctioned items",r.sub?.santion_items??"—"],
+   ["LT award %",r.lt?.award_pern??"—"],["HT award %",r.ht?.award_pern??"—"],
+   ["DTR award %",r.dtr?.award_pern??"—"],["Substation award %",r.sub?.award_pern??"—"]];
+  summary.innerHTML="<p><strong>Live response received.</strong></p><table><tr><th>Indicator</th><th>Live RDSS value</th></tr>"+items.map(x=>"<tr><td>"+x[0]+"</td><td>"+x[1]+"</td></tr>").join("")+"</table>";
+ }catch(err){
+  status.className="status error";status.textContent="🔴 FAILED — The browser could not read the RDSS API from this website.";
+  raw.textContent=err.message;
+  summary.innerHTML="<p><strong>What this means:</strong> It does not necessarily mean the RDSS API is down. The API may work when opened directly while the GitHub-hosted dashboard is prevented from reading it because the two websites are different. This is controlled by the RDSS server.</p>";
+ }
+}
+testAPI();
+</script>
+</body>
+</html>
