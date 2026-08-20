@@ -94,10 +94,16 @@ let DATA = {
     {name:"Substation",sanCost:22022.31,awardCost:36224.03,sanItems:48,awardItems:48,surveyed:26,installed:0}
   ]
 };
-  async function loadLiveRDSSData() {
+ async function loadLiveRDSSData() {
+  const status = document.getElementById("liveStatus");
+
   try {
+    if (status) {
+      status.textContent = "● Connecting to RDSS...";
+    }
+
     const response = await fetch(
-      "https://rdss-api-bridge.vaibhavhajela1.workers.dev/"
+      "https://rdss-api-bridge.vaibhavhajela1.workers.dev/physical"
     );
 
     if (!response.ok) {
@@ -106,95 +112,61 @@ let DATA = {
 
     const rdss = await response.json();
 
-    if (rdss._resultflag !== "1") {
+    if (rdss._resultflag && rdss._resultflag !== "1") {
       throw new Error("RDSS returned an unsuccessful result.");
     }
 
     const rows = rdss.rows || {};
 
-    /*
-      Convert the live RDSS response into the format
-      already used by the dashboard.
-    */
-
-    const liveComponents = [];
-
-    if (rows.lt) {
-      liveComponents.push({
+    const liveComponents = [
+      {
         name: "LT",
-        san: Number(String(rows.lt.santion_items).replace(/,/g, "")),
-        award: Number(String(rows.lt.award_items).replace(/,/g, "")),
-        ach: Number(String(rows.lt.achievment).replace(/,/g, "")),
-        installed: Number(String(rows.lt.installed_items).replace(/,/g, "")),
-        awardPct: Number(rows.lt.award_pern),
-        surveyPct: Number(rows.lt.surveyed_pern)
-      });
-    }
-
-    if (rows.ht) {
-      liveComponents.push({
+        san: Number(String(rows.lt?.santion_items || "0").replace(/,/g, "")),
+        award: Number(String(rows.lt?.award_items || "0").replace(/,/g, "")),
+        ach: Number(String(rows.lt?.achievment || "0").replace(/,/g, "")),
+        installed: Number(String(rows.lt?.installed_items || "0").replace(/,/g, "")),
+        awardPct: Number(rows.lt?.award_pern || 0),
+        surveyPct: Number(rows.lt?.surveyed_pern || 0)
+      },
+      {
         name: "HT",
-        san: Number(String(rows.ht.santion_items).replace(/,/g, "")),
-        award: Number(String(rows.ht.award_items).replace(/,/g, "")),
-        ach: Number(String(rows.ht.achievment).replace(/,/g, "")),
-        installed: Number(String(rows.ht.installed_items).replace(/,/g, "")),
-        awardPct: Number(rows.ht.award_pern),
-        surveyPct: Number(rows.ht.surveyed_pern)
-      });
-    }
-
-    if (rows.dtr) {
-      liveComponents.push({
+        san: Number(String(rows.ht?.santion_items || "0").replace(/,/g, "")),
+        award: Number(String(rows.ht?.award_items || "0").replace(/,/g, "")),
+        ach: Number(String(rows.ht?.achievment || "0").replace(/,/g, "")),
+        installed: Number(String(rows.ht?.installed_items || "0").replace(/,/g, "")),
+        awardPct: Number(rows.ht?.award_pern || 0),
+        surveyPct: Number(rows.ht?.surveyed_pern || 0)
+      },
+      {
         name: "DTR",
-        san: Number(String(rows.dtr.santion_items).replace(/,/g, "")),
-        award: Number(String(rows.dtr.award_items).replace(/,/g, "")),
-        ach: Number(String(rows.dtr.achievment).replace(/,/g, "")),
-        installed: Number(String(rows.dtr.installed_items).replace(/,/g, "")),
-        awardPct: Number(rows.dtr.award_pern),
-        surveyPct: Number(rows.dtr.surveyed_pern)
-      });
-    }
-
-    if (rows.sub) {
-      liveComponents.push({
+        san: Number(String(rows.dtr?.santion_items || "0").replace(/,/g, "")),
+        award: Number(String(rows.dtr?.award_items || "0").replace(/,/g, "")),
+        ach: Number(String(rows.dtr?.achievment || "0").replace(/,/g, "")),
+        installed: Number(String(rows.dtr?.installed_items || "0").replace(/,/g, "")),
+        awardPct: Number(rows.dtr?.award_pern || 0),
+        surveyPct: Number(rows.dtr?.surveyed_pern || 0)
+      },
+      {
         name: "Substation",
-        san: Number(String(rows.sub.santion_items).replace(/,/g, "")),
-        award: Number(String(rows.sub.award_items).replace(/,/g, "")),
-        ach: Number(String(rows.sub.achievment).replace(/,/g, "")),
-        installed: Number(String(rows.sub.installed_items).replace(/,/g, "")),
-        awardPct: Number(rows.sub.award_pern),
-        surveyPct: Number(rows.sub.surveyed_pern)
-      });
-    }
+        san: Number(String(rows.sub?.santion_items || "0").replace(/,/g, "")),
+        award: Number(String(rows.sub?.award_items || "0").replace(/,/g, "")),
+        ach: Number(String(rows.sub?.achievment || "0").replace(/,/g, "")),
+        installed: Number(String(rows.sub?.installed_items || "0").replace(/,/g, "")),
+        awardPct: Number(rows.sub?.award_pern || 0),
+        surveyPct: Number(rows.sub?.surveyed_pern || 0)
+      }
+    ];
 
-    /*
-      Replace the dashboard's component data with
-      the live RDSS values.
-    */
-
-    if (liveComponents.length > 0) {
-      DATA.components = liveComponents;
-    }
-
-    /*
-      Keep the raw response available for future use.
-    */
-
+    DATA.components = liveComponents;
     DATA.livePhysical = rows;
-
-    /*
-      Record the time at which the dashboard successfully
-      received live RDSS data.
-    */
-
     DATA.lastUpdated = new Date();
-const status = document.getElementById("liveStatus");
 
-if (status) {
-  status.textContent =
-    "● Live RDSS data • " +
-    DATA.lastUpdated.toLocaleTimeString("en-IN");
-}
+    if (status) {
+      status.textContent =
+        "● Live RDSS data • " +
+        DATA.lastUpdated.toLocaleTimeString("en-IN");
+    }
+
     console.log("LIVE RDSS DATA LOADED:", rdss);
 
     return true;
@@ -205,12 +177,11 @@ if (status) {
 
     DATA.liveError = error.message;
 
-    return false;
- const status = document.getElementById("liveStatus");
+    if (status) {
+      status.textContent = "● RDSS connection unavailable";
+    }
 
-if (status) {
-  status.textContent = "● RDSS connection unavailable";
-}
+    return false;
   }
 }
   let page="Overview", stateFilter="All", discomFilter="All", search="";
@@ -336,78 +307,15 @@ function render(){
   renderNav();
   el("#app").innerHTML=page==="Overview"?overview():page==="State Performance"?statePage():page==="DISCOM Financial"?discomPage():page==="Component Progress"?componentPage():assetPage();
 }
-loadLiveRDSSData().then(() => {
-  async function startDashboard() {
-
+async function startDashboard() {
   render();
 
-  try {
+  await loadLiveRDSSData();
 
-    const response = await fetch(
-      "https://rdss-api-bridge.vaibhavhajela1.workers.dev/physical"
-    );
-
-    if (!response.ok) {
-      throw new Error("Live RDSS API failed");
-    }
-
-    const rdss = await response.json();
-
-    const rows = rdss.rows || {};
-
-    DATA.components = [
-      {
-        name: "LT",
-        san: Number(String(rows.lt?.santion_items || "0").replace(/,/g, "")),
-        award: Number(String(rows.lt?.award_items || "0").replace(/,/g, "")),
-        ach: Number(String(rows.lt?.achievment || "0").replace(/,/g, "")),
-        installed: Number(String(rows.lt?.installed_items || "0").replace(/,/g, "")),
-        awardPct: Number(rows.lt?.award_pern || 0),
-        surveyPct: Number(rows.lt?.surveyed_pern || 0)
-      },
-      {
-        name: "HT",
-        san: Number(String(rows.ht?.santion_items || "0").replace(/,/g, "")),
-        award: Number(String(rows.ht?.award_items || "0").replace(/,/g, "")),
-        ach: Number(String(rows.ht?.achievment || "0").replace(/,/g, "")),
-        installed: Number(String(rows.ht?.installed_items || "0").replace(/,/g, "")),
-        awardPct: Number(rows.ht?.award_pern || 0),
-        surveyPct: Number(rows.ht?.surveyed_pern || 0)
-      },
-      {
-        name: "DTR",
-        san: Number(String(rows.dtr?.santion_items || "0").replace(/,/g, "")),
-        award: Number(String(rows.dtr?.award_items || "0").replace(/,/g, "")),
-        ach: Number(String(rows.dtr?.achievment || "0").replace(/,/g, "")),
-        installed: Number(String(rows.dtr?.installed_items || "0").replace(/,/g, "")),
-        awardPct: Number(rows.dtr?.award_pern || 0),
-        surveyPct: Number(rows.dtr?.surveyed_pern || 0)
-      },
-      {
-        name: "Substation",
-        san: Number(String(rows.sub?.santion_items || "0").replace(/,/g, "")),
-        award: Number(String(rows.sub?.award_items || "0").replace(/,/g, "")),
-        ach: Number(String(rows.sub?.achievment || "0").replace(/,/g, "")),
-        installed: Number(String(rows.sub?.installed_items || "0").replace(/,/g, "")),
-        awardPct: Number(rows.sub?.award_pern || 0),
-        surveyPct: Number(rows.sub?.surveyed_pern || 0)
-      }
-    ];
-
-    // Update dashboard after live data arrives
-    render();
-
-    console.log("LIVE RDSS COMPONENT DATA LOADED");
-
-  } catch (error) {
-
-    console.error("Live RDSS data could not be loaded:", error);
-
-  }
+  render();
 }
 
 startDashboard();
-});
 </script>
 </body>
 </html>
